@@ -8,9 +8,11 @@ import { connectDB } from './config/db.js';
 import { uploadsDir } from './middleware/upload.js';
 import { isBot } from './utils/botDetect.js';
 import { renderMetaHtml } from './utils/renderMetaHtml.js';
-import Post from './models/Post.js';
+import Job from './models/Job.js';
 import authRoutes from './routes/authRoutes.js';
-import postRoutes from './routes/postRoutes.js';
+import jobRoutes from './routes/jobRoutes.js';
+import applicationRoutes from './routes/applicationRoutes.js';
+import seekerRoutes from './routes/seekerRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 
 dotenv.config();
@@ -27,56 +29,51 @@ app.use(express.json());
 app.use('/uploads', express.static(uploadsDir));
 
 app.use('/api/auth', authRoutes);
-app.use('/api/posts', postRoutes);
+app.use('/api/jobs', jobRoutes);
+app.use('/api/applications', applicationRoutes);
+app.use('/api/seekers', seekerRoutes);
 app.use('/api/upload', uploadRoutes);
 
-// Dynamic sitemap so search engines discover every post, generated fresh from the DB each request
+// Dynamic sitemap
 app.get('/sitemap.xml', async (req, res) => {
-  const posts = await Post.find({}, 'slug updatedAt').sort({ createdAt: -1 });
-
+  const jobs = await Job.find({ isActive: true }, 'slug updatedAt').sort({ createdAt: -1 });
   const urls = [
     `<url><loc>${siteUrl()}/</loc><changefreq>daily</changefreq></url>`,
-    ...posts.map(
-      (post) =>
-        `<url><loc>${siteUrl()}/post/${post.slug}</loc><lastmod>${post.updatedAt.toISOString()}</lastmod></url>`
+    ...jobs.map(
+      (job) =>
+        `<url><loc>${siteUrl()}/jobs/${job.slug}</loc><lastmod>${job.updatedAt.toISOString()}</lastmod></url>`
     ),
   ];
-
   res.type('application/xml');
   res.send(
     `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>`
   );
 });
 
-// Crawlers that don't run JS (WhatsApp, Telegram, Facebook, etc.) get a small pre-rendered
-// HTML page with the real meta tags instead of the empty SPA shell. Real browsers fall through
-// to the React app below via next().
+// Bot pre-rendering for social sharing
 app.get('/', (req, res, next) => {
   if (!isBot(req.headers['user-agent'])) return next();
-
   res.send(
     renderMetaHtml({
-      title: 'Jobcode Clone | Latest Job Openings',
-      description: 'Latest fresher and experienced job openings, internships, and off-campus drives.',
+      title: 'Vertex HR Solutions | Find Your Dream Job',
+      description: 'Vertex HR Solutions connects top talent with leading companies. Browse thousands of job openings across industries.',
       url: siteUrl(),
       redirectTo: siteUrl(),
     })
   );
 });
 
-app.get('/post/:slug', async (req, res, next) => {
+app.get('/jobs/:slug', async (req, res, next) => {
   if (!isBot(req.headers['user-agent'])) return next();
-
-  const post = await Post.findOne({ slug: req.params.slug });
-  if (!post) return next();
-
-  const url = `${siteUrl()}/post/${post.slug}`;
+  const job = await Job.findOne({ slug: req.params.slug });
+  if (!job) return next();
+  const url = `${siteUrl()}/jobs/${job.slug}`;
   res.send(
     renderMetaHtml({
-      title: `${post.title} | Jobcode Clone`,
-      description: post.excerpt,
+      title: `${job.title} at ${job.company} | Vertex HR Solutions`,
+      description: job.excerpt,
       url,
-      image: post.coverImage,
+      image: job.coverImage,
       redirectTo: url,
       type: 'article',
     })
@@ -88,15 +85,14 @@ if (hasFrontendBuild) {
   app.get('*', (req, res) => res.sendFile(path.join(frontendDist, 'index.html')));
 } else {
   app.get('/', (req, res) =>
-    res.send('Jobcode API running (frontend not built — run `npm run build` in /frontend to enable unified serving)')
+    res.send('Vertex HR Solutions API running')
   );
 }
 
-// Multer errors (bad file type, file too large) land here instead of the route handler
 app.use((err, req, res, next) => {
   if (err) return res.status(400).json({ message: err.message });
   next();
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Vertex HR Solutions server running on port ${PORT}`));

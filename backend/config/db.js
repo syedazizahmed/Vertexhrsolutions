@@ -1,4 +1,9 @@
+import dns from 'dns';
 import mongoose from 'mongoose';
+
+// Router DNS blocks TCP port 53 (needed for SRV records) — use Google DNS directly
+dns.setServers(['8.8.8.8', '8.8.4.4']);
+dns.setDefaultResultOrder('ipv4first');
 
 export const connectDB = async () => {
   try {

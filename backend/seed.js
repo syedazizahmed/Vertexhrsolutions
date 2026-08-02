@@ -8,8 +8,8 @@ dotenv.config();
 const run = async () => {
   await connectDB();
 
-  const email = 'admin@jobcode.in';
-  const plainPassword = 'admin123';
+  const email = 'admin@vertexhrsolutions.com';
+  const plainPassword = 'Admin@1234';
 
   const existing = await User.findOne({ email });
   if (existing) {
