@@ -19,7 +19,7 @@ export default function AdminDashboard() {
 
   const fetchJobs = () => {
     setLoading(true);
-    api.get<PaginatedJobs>('/jobs', { params: { page, limit: 15 } })
+    api.get<PaginatedJobs>('/jobs', { params: { page, limit: 15, all: true } })
       .then((r) => { setJobs(r.data.jobs); setTotalPages(r.data.totalPages); setTotal(r.data.total); })
       .finally(() => setLoading(false));
   };

@@ -11,6 +11,8 @@ const applicationSchema = new mongoose.Schema(
     coverLetter: { type: String },
     linkedin: { type: String },
     portfolio: { type: String },
+    location: { type: String },
+    experience: { type: String },
     currentCompany: { type: String },
     currentCTC: { type: String },
     expectedCTC: { type: String },

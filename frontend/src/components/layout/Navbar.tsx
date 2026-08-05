@@ -1,14 +1,16 @@
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Sun, Moon, LogOut, LogIn, UserPlus } from 'lucide-react';
+import { Menu, Sun, Moon, LogOut, LogIn, UserPlus } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useSeeker } from '@/context/SeekerContext';
 import { useTheme } from '@/context/ThemeContext';
+import { useCategory } from '@/context/CategoryContext';
 
 export default function Navbar() {
   const { admin, adminLogout } = useAuth();
   const { seeker, seekerLogout } = useSeeker();
   const { theme, toggleTheme } = useTheme();
+  const { openCategoryDrawer } = useCategory();
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
@@ -41,7 +43,15 @@ export default function Navbar() {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}
     >
-      {/* Logo */}
+      {/* Left: category menu + logo */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+        <button
+          className="btn btn-ghost btn-sm btn-icon"
+          onClick={openCategoryDrawer}
+          title="Job categories"
+        >
+          <Menu size={18} />
+        </button>
       <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', textDecoration: 'none', flexShrink: 0 }}>
         <img
           src="/logo-mark.png"
@@ -59,6 +69,7 @@ export default function Navbar() {
           Vertex HR Solutions
         </span>
       </Link>
+      </div>
 
       {/* Nav links */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1.75rem' }}>

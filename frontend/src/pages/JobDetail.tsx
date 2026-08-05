@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
-import { MapPin, Clock, Briefcase, Building2, Calendar, GraduationCap, ChevronLeft, ExternalLink, CheckCircle2 } from 'lucide-react';
+import { MapPin, Clock, Briefcase, Building2, Calendar, GraduationCap, ChevronLeft, ExternalLink, CheckCircle2, Pencil, Wallet, Star } from 'lucide-react';
 import api from '@/api/api';
 import GoogleAd from '@/components/ui/GoogleAd';
 import { useSeeker } from '@/context/SeekerContext';
+import { useAuth } from '@/context/AuthContext';
 import { SITE_NAME, SITE_URL, GOOGLE_ADS_SLOT_INLINE } from '@/config/site';
 import type { Job } from '@/types';
 
@@ -14,17 +15,19 @@ export default function JobDetail() {
   const [job, setJob] = useState<Job | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [alreadyApplied, setAlreadyApplied] = useState(false);
+  const [applicationStatus, setApplicationStatus] = useState<string | undefined>();
   const { trackView, seeker } = useSeeker();
+  const { admin } = useAuth();
 
   useEffect(() => {
-    setJob(null); setNotFound(false); setAlreadyApplied(false);
+    setJob(null); setNotFound(false); setAlreadyApplied(false); setApplicationStatus(undefined);
     api.get<Job>(`/jobs/${slug}`)
       .then((r) => {
         setJob(r.data);
         trackView(r.data._id, r.data.tags);
         if (seeker) {
-          api.get<{ applied: boolean }>(`/applications/check/${r.data._id}`)
-            .then((res) => setAlreadyApplied(res.data.applied))
+          api.get<{ applied: boolean; status?: string }>(`/applications/check/${r.data._id}`)
+            .then((res) => { setAlreadyApplied(res.data.applied); setApplicationStatus(res.data.status); })
             .catch(() => {});
         }
       })
@@ -86,7 +89,7 @@ export default function JobDetail() {
                     { icon: <MapPin size={13} />, val: job.location },
                     { icon: <Briefcase size={13} />, val: job.jobType },
                     job.experience && { icon: <Clock size={13} />, val: job.experience },
-                    job.salary && { icon: null, val: job.salary, color: 'var(--green)' },
+                    job.salary && { icon: <Wallet size={13} />, val: job.salary, color: 'var(--green)' },
                     job.qualification && { icon: <GraduationCap size={13} />, val: job.qualification },
                     job.deadline && { icon: <Calendar size={13} />, val: `Apply by ${new Date(job.deadline).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`, color: '#fbbf24' },
                   ].filter(Boolean).map((m: any, i) => (
@@ -120,29 +123,48 @@ export default function JobDetail() {
               <GoogleAd slot={GOOGLE_ADS_SLOT_INLINE} format="rectangle" style={{ minHeight: 200, margin: '1.25rem 0' }} />
             </div>
 
-            {/* Apply sidebar */}
+            {/* Apply / Admin sidebar */}
             <div style={{ position: 'sticky', top: 98 }}>
               <div className="card-flat" style={{ padding: '1.25rem', textAlign: 'center' }}>
-                <p style={{ color: 'var(--text-2)', fontSize: '0.82rem', marginBottom: '1rem', lineHeight: 1.5 }}>
-                  {alreadyApplied ? "You've already applied to this job." : 'Ready to apply? Our team will follow up within 3–5 business days.'}
-                </p>
-                {alreadyApplied ? (
-                  <div className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center', cursor: 'default', color: 'var(--green)' }}>
-                    <CheckCircle2 size={15} /> Already Applied
-                  </div>
-                ) : job.applyLink ? (
-                  <a href={job.applyLink} target="_blank" rel="noreferrer" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
-                    Apply Now <ExternalLink size={13} />
-                  </a>
+                {admin ? (
+                  <>
+                    <p style={{ color: 'var(--text-2)', fontSize: '0.82rem', marginBottom: '1rem', lineHeight: 1.5 }}>
+                      Manage this listing.
+                    </p>
+                    <Link to={`/admin/jobs/edit/${job._id}`} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+                      <Pencil size={14} /> Edit Job
+                    </Link>
+                  </>
                 ) : (
-                  <Link to={`/jobs/${job.slug}/apply`} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
-                    {seeker ? 'Apply Now →' : 'Sign in to Apply →'}
-                  </Link>
-                )}
-                {!job.applyLink && !seeker && (
-                  <p style={{ marginTop: '0.6rem', color: 'var(--text-3)', fontSize: '0.74rem' }}>
-                    You'll need an account to apply.
-                  </p>
+                  <>
+                    <p style={{ color: 'var(--text-2)', fontSize: '0.82rem', marginBottom: '1rem', lineHeight: 1.5 }}>
+                      {applicationStatus === 'Shortlisted' ? "You've been shortlisted for this role!"
+                        : alreadyApplied ? "You've already applied to this job."
+                        : 'Ready to apply? Our team will follow up within 3–5 business days.'}
+                    </p>
+                    {applicationStatus === 'Shortlisted' ? (
+                      <div className="btn" style={{ width: '100%', justifyContent: 'center', cursor: 'default', background: 'rgba(16,185,129,0.12)', color: '#34d399', border: '1px solid rgba(16,185,129,0.25)' }}>
+                        <Star size={15} fill="#34d399" /> Shortlisted
+                      </div>
+                    ) : alreadyApplied ? (
+                      <div className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center', cursor: 'default', color: 'var(--green)' }}>
+                        <CheckCircle2 size={15} /> Already Applied
+                      </div>
+                    ) : job.applyLink ? (
+                      <a href={job.applyLink} target="_blank" rel="noreferrer" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+                        Apply Now <ExternalLink size={13} />
+                      </a>
+                    ) : (
+                      <Link to={`/jobs/${job.slug}/apply`} className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+                        {seeker ? 'Apply Now →' : 'Sign in to Apply →'}
+                      </Link>
+                    )}
+                    {!job.applyLink && !seeker && (
+                      <p style={{ marginTop: '0.6rem', color: 'var(--text-3)', fontSize: '0.74rem' }}>
+                        You'll need an account to apply.
+                      </p>
+                    )}
+                  </>
                 )}
                 <p style={{ marginTop: '0.875rem', color: 'var(--text-3)', fontSize: '0.74rem' }}>
                   Posted {new Date(job.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}

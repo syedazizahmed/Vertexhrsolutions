@@ -17,7 +17,7 @@ const jobSchema = new mongoose.Schema(
     salary: { type: String },
     experience: {
       type: String,
-      enum: ['Fresher', '1-2 years', '3-5 years', '5-10 years', '10+ years'],
+      enum: ['Internship', 'Fresher', '1-2 years', '3-5 years', '5-10 years', '10+ years'],
     },
     qualification: { type: String },
     tags: [{ type: String }],

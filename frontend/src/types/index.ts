@@ -31,6 +31,8 @@ export interface Application {
   coverLetter?: string;
   linkedin?: string;
   portfolio?: string;
+  location?: string;
+  experience?: string;
   currentCompany?: string;
   currentCTC?: string;
   expectedCTC?: string;

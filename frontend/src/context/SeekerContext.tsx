@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import api from '@/api/api';
 
 interface SeekerUser { name: string; email: string; interestTags: string[]; isVerified: boolean }
@@ -27,6 +27,20 @@ export function SeekerProvider({ children }: { children: ReactNode }) {
     return raw ? JSON.parse(raw) : [];
   });
 
+  // An admin signing in elsewhere clears any lingering seeker session (only one identity active per browser session).
+  useEffect(() => {
+    const handler = () => { setSeeker(null); setInterestTags([]); };
+    window.addEventListener('vertex:seeker-logout', handler);
+    return () => window.removeEventListener('vertex:seeker-logout', handler);
+  }, []);
+
+  const clearAdminSession = () => {
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminName');
+    localStorage.removeItem('adminEmail');
+    window.dispatchEvent(new Event('vertex:admin-logout'));
+  };
+
   const save = (token: string, user: SeekerUser) => {
     localStorage.setItem('seekerToken', token);
     localStorage.setItem('seekerUser', JSON.stringify(user));
@@ -35,6 +49,7 @@ export function SeekerProvider({ children }: { children: ReactNode }) {
 
   const seekerLogin = useCallback(async (email: string, password: string) => {
     const { data } = await api.post('/seekers/login', { email, password });
+    clearAdminSession();
     save(data.token, { name: data.name, email: data.email, isVerified: data.isVerified, interestTags: [] });
     const me = await api.get('/seekers/me');
     const updated = { name: data.name, email: data.email, isVerified: me.data.isVerified, interestTags: me.data.interestTags };
@@ -45,6 +60,7 @@ export function SeekerProvider({ children }: { children: ReactNode }) {
 
   const seekerRegister = useCallback(async (name: string, email: string, password: string) => {
     const { data } = await api.post('/seekers/register', { name, email, password });
+    clearAdminSession();
     save(data.token, { name: data.name, email: data.email, isVerified: data.isVerified, interestTags: [] });
   }, []);
 

@@ -1,4 +1,5 @@
 import express from 'express';
+import jwt from 'jsonwebtoken';
 import Job from '../models/Job.js';
 import { protect } from '../middleware/auth.js';
 
@@ -10,18 +11,33 @@ const slugify = (text) =>
     .replace(/[\s_-]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
+// Admin tokens carry no `role` claim (unlike seeker tokens, which have role: 'seeker').
+const isAdminRequest = (req) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return false;
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    return !decoded.role;
+  } catch {
+    return false;
+  }
+};
+
 // GET /api/jobs - list with filters, search, pagination
 router.get('/', async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const { tag, search, jobType, location, experience } = req.query;
+    const { tag, search, jobType, location, experience, category } = req.query;
 
-    const filter = { isActive: true };
+    const filter = (req.query.all === 'true' && isAdminRequest(req)) ? {} : { isActive: true };
     if (tag) filter.tags = tag;
     if (jobType) filter.jobType = jobType;
     if (experience) filter.experience = experience;
     if (location) filter.location = { $regex: location, $options: 'i' };
+    if (category === 'freshers') filter.experience = 'Fresher';
+    else if (category === 'experienced') filter.experience = { $in: ['1-2 years', '3-5 years', '5-10 years', '10+ years'] };
+    else if (category === 'internships') filter.experience = 'Internship';
     if (search) {
       filter.$or = [
         { title: { $regex: search, $options: 'i' } },

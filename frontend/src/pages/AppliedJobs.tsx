@@ -1,14 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { MapPin, Briefcase, ArrowRight, ClipboardList, Search, X } from 'lucide-react';
+import { MapPin, Briefcase, ArrowRight, ClipboardList, Search, X, Star } from 'lucide-react';
 import api from '@/api/api';
 import type { Application } from '@/types';
 
+const STATUSES = ['New', 'Reviewed', 'Shortlisted', 'Rejected'] as const;
+
 export default function AppliedJobs() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const statusFilter = searchParams.get('status') || '';
 
   useEffect(() => {
     api.get<Application[]>('/applications/mine')
@@ -16,37 +20,51 @@ export default function AppliedJobs() {
       .finally(() => setLoading(false));
   }, []);
 
+  const setStatusFilter = (status: string) => {
+    setSearchParams(status ? { status } : {});
+  };
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return applications;
-    return applications.filter((app) =>
-      app.job?.title?.toLowerCase().includes(q) ||
-      app.job?.company?.toLowerCase().includes(q) ||
-      app.job?.location?.toLowerCase().includes(q)
-    );
-  }, [applications, search]);
+    return applications.filter((app) => {
+      const matchesStatus = !statusFilter || app.status === statusFilter;
+      const matchesSearch = !q ||
+        app.job?.title?.toLowerCase().includes(q) ||
+        app.job?.company?.toLowerCase().includes(q) ||
+        app.job?.location?.toLowerCase().includes(q);
+      return matchesStatus && matchesSearch;
+    });
+  }, [applications, search, statusFilter]);
 
   return (
     <main style={{ maxWidth: 800, margin: '0 auto', padding: '2rem 1.5rem 5rem' }}>
-      <h1 style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.2rem', letterSpacing: '-0.01em' }}>Applied Jobs</h1>
+      <h1 style={{ fontSize: '1.3rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.2rem', letterSpacing: '-0.01em' }}>
+        {statusFilter ? `${statusFilter} Jobs` : 'Applied Jobs'}
+      </h1>
       <p style={{ color: 'var(--text-3)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>Jobs you've applied to and their current status.</p>
 
       {!loading && applications.length > 0 && (
-        <div style={{ position: 'relative', marginBottom: '1.25rem' }}>
-          <Search size={14} style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-3)', pointerEvents: 'none' }} />
-          <input
-            className="input"
-            style={{ paddingLeft: '2.25rem', paddingRight: search ? '2.25rem' : undefined }}
-            placeholder="Search by job title, company, or location..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          {search && (
-            <button onClick={() => setSearch('')} aria-label="Clear search"
-              style={{ position: 'absolute', right: '0.7rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-3)', cursor: 'pointer', padding: '0.2rem', display: 'flex' }}>
-              <X size={14} />
-            </button>
-          )}
+        <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
+            <Search size={14} style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-3)', pointerEvents: 'none' }} />
+            <input
+              className="input"
+              style={{ paddingLeft: '2.25rem', paddingRight: search ? '2.25rem' : undefined }}
+              placeholder="Search by job title, company, or location..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            {search && (
+              <button onClick={() => setSearch('')} aria-label="Clear search"
+                style={{ position: 'absolute', right: '0.7rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-3)', cursor: 'pointer', padding: '0.2rem', display: 'flex' }}>
+                <X size={14} />
+              </button>
+            )}
+          </div>
+          <select className="input" style={{ width: 'auto', flexShrink: 0 }} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            <option value="">All Status</option>
+            {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
         </div>
       )}
 
@@ -63,14 +81,16 @@ export default function AppliedJobs() {
       ) : filtered.length === 0 ? (
         <div className="card-flat" style={{ padding: '3rem 1.5rem', textAlign: 'center' }}>
           <Search size={28} color="var(--text-3)" style={{ marginBottom: '0.75rem' }} />
-          <p style={{ color: 'var(--text-2)', fontSize: '0.9rem' }}>No applications match "{search}".</p>
+          <p style={{ color: 'var(--text-2)', fontSize: '0.9rem' }}>
+            {statusFilter ? `No ${statusFilter.toLowerCase()} applications${search ? ` match "${search}"` : ''}.` : `No applications match "${search}".`}
+          </p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
           {filtered.map((app, i) => (
             <motion.div key={app._id} className="card-flat"
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, delay: i * 0.04 }}
-              style={{ padding: '1.25rem' }}>
+              style={{ padding: '1.25rem', border: app.status === 'Shortlisted' ? '1px solid rgba(16,185,129,0.3)' : undefined }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', flexWrap: 'wrap' }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
@@ -79,7 +99,10 @@ export default function AppliedJobs() {
                   </div>
                   <div style={{ color: 'var(--text-2)', fontSize: '0.85rem' }}>{app.job?.company}</div>
                 </div>
-                <span className={`status-badge status-${app.status}`}>{app.status}</span>
+                <span className={`status-badge status-${app.status}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                  {app.status === 'Shortlisted' && <Star size={12} fill="#34d399" />}
+                  {app.status}
+                </span>
               </div>
 
               <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>

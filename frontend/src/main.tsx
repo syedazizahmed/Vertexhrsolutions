@@ -6,6 +6,7 @@ import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import { SeekerProvider } from './context/SeekerContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { CategoryProvider } from './context/CategoryContext';
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -15,7 +16,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <ThemeProvider>
           <AuthProvider>
             <SeekerProvider>
-              <App />
+              <CategoryProvider>
+                <App />
+              </CategoryProvider>
             </SeekerProvider>
           </AuthProvider>
         </ThemeProvider>

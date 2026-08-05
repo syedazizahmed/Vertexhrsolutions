@@ -4,6 +4,7 @@ import Application from '../models/Application.js';
 import Job from '../models/Job.js';
 import { protect } from '../middleware/auth.js';
 import { resumeUpload } from '../middleware/upload.js';
+import { sendShortlistedEmail, sendRejectionEmail } from '../utils/mailer.js';
 
 const router = express.Router();
 
@@ -28,7 +29,7 @@ router.post('/:jobId', resumeUpload.single('resume'), async (req, res) => {
     const job = await Job.findById(req.params.jobId);
     if (!job || !job.isActive) return res.status(404).json({ message: 'Job not found or closed' });
 
-    const { name, email, phone, coverLetter, linkedin, portfolio, currentCompany, currentCTC, expectedCTC, noticePeriod } = req.body;
+    const { name, email, phone, coverLetter, linkedin, portfolio, location, experience, currentCompany, currentCTC, expectedCTC, noticePeriod } = req.body;
 
     const existing = await Application.findOne({ job: req.params.jobId, $or: [{ seeker: seekerId }, { email }] });
     if (existing) return res.status(400).json({ message: 'You have already applied for this job.' });
@@ -39,7 +40,7 @@ router.post('/:jobId', resumeUpload.single('resume'), async (req, res) => {
       job: req.params.jobId,
       seeker: seekerId,
       name, email, phone, resume, coverLetter,
-      linkedin, portfolio, currentCompany,
+      linkedin, portfolio, location, experience, currentCompany,
       currentCTC, expectedCTC, noticePeriod,
     });
 
@@ -67,7 +68,7 @@ router.get('/check/:jobId', protect, async (req, res) => {
   if (req.user.role !== 'seeker') return res.status(403).json({ message: 'Forbidden' });
   try {
     const existing = await Application.findOne({ job: req.params.jobId, seeker: req.user.id });
-    res.json({ applied: !!existing });
+    res.json({ applied: !!existing, status: existing?.status });
   } catch {
     res.status(500).json({ message: 'Server error' });
   }
@@ -124,9 +125,13 @@ router.patch('/:id/status', protect, async (req, res) => {
       req.params.id,
       { status },
       { new: true }
-    );
+    ).populate('job', 'title company');
     if (!application) return res.status(404).json({ message: 'Application not found' });
     res.json(application);
+
+    const mail = { to: application.email, name: application.name, jobTitle: application.job?.title, company: application.job?.company };
+    if (status === 'Shortlisted') sendShortlistedEmail(mail).catch((err) => console.error('Failed to send shortlisted email:', err.message));
+    else if (status === 'Rejected') sendRejectionEmail(mail).catch((err) => console.error('Failed to send rejection email:', err.message));
   } catch {
     res.status(500).json({ message: 'Server error' });
   }

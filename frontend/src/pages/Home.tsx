@@ -6,8 +6,10 @@ import api from '@/api/api';
 import JobCard from '@/components/jobs/JobCard';
 import TagFilter from '@/components/jobs/TagFilter';
 import SearchBar from '@/components/jobs/SearchBar';
+import { CATEGORIES } from '@/components/jobs/CategoryDrawer';
 import Pagination from '@/components/ui/Pagination';
 import { useSeeker } from '@/context/SeekerContext';
+import { useCategory } from '@/context/CategoryContext';
 import { SITE_NAME, DEFAULT_DESCRIPTION, SITE_URL } from '@/config/site';
 import type { Job, PaginatedJobs } from '@/types';
 
@@ -32,6 +34,7 @@ function SkeletonCard() {
 
 export default function Home() {
   const { interestTags, seeker } = useSeeker();
+  const { activeCategory } = useCategory();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [recommended, setRecommended] = useState<Job[]>([]);
   const [tags, setTags] = useState<string[]>([]);
@@ -44,12 +47,14 @@ export default function Home() {
 
   useEffect(() => { api.get('/jobs/tags').then((r) => setTags(r.data)); }, []);
 
+  useEffect(() => { setPage(1); }, [activeCategory]);
+
   useEffect(() => {
     setLoading(true);
-    api.get<PaginatedJobs>('/jobs', { params: { tag: activeTag, search, page, limit: 10 } })
+    api.get<PaginatedJobs>('/jobs', { params: { tag: activeTag, category: activeCategory, search, page, limit: 10 } })
       .then((r) => { setJobs(r.data.jobs); setTotalPages(r.data.totalPages); setTotal(r.data.total); })
       .finally(() => setLoading(false));
-  }, [activeTag, search, page]);
+  }, [activeTag, activeCategory, search, page]);
 
   useEffect(() => {
     if (interestTags.length === 0) return;
@@ -60,6 +65,7 @@ export default function Home() {
 
   const handleTagSelect = (tag: string) => { setActiveTag(tag); setPage(1); };
   const handleSearch = (v: string) => { setSearch(v); setPage(1); };
+  const activeCategoryLabel = CATEGORIES.find((c) => c.value === activeCategory)?.label;
 
   return (
     <>
@@ -128,7 +134,7 @@ export default function Home() {
         {/* Filter row */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.9rem', flexWrap: 'wrap', gap: '0.75rem' }}>
           <h2 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text)' }}>
-            {activeTag ? `${activeTag} jobs` : 'All jobs'}
+            {activeCategoryLabel || (activeTag ? `${activeTag} jobs` : 'All jobs')}
             <span style={{ color: 'var(--text-3)', fontWeight: 400, marginLeft: '0.4rem', fontSize: '0.85rem' }}>({total})</span>
           </h2>
           <TagFilter tags={tags} activeTag={activeTag} onSelect={handleTagSelect} />

@@ -15,6 +15,8 @@ const schema = z.object({
   coverLetter: z.string().optional(),
   linkedin: z.string().url('Enter a valid URL').optional().or(z.literal('')),
   portfolio: z.string().url('Enter a valid URL').optional().or(z.literal('')),
+  location: z.string().optional(),
+  experience: z.string().optional(),
   currentCompany: z.string().optional(),
   currentCTC: z.string().optional(),
   expectedCTC: z.string().optional(),
@@ -102,13 +104,17 @@ export default function Apply() {
               </Field>
             </div>
 
-            <Field label="Phone *" error={errors.phone?.message}>
-              <input className="input" placeholder="+91 98765 43210" {...register('phone')} />
-            </Field>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <Field label="Phone *" error={errors.phone?.message}>
+                <input className="input" placeholder="+91 98765 43210" {...register('phone')} />
+              </Field>
+              <Field label="Current Location"><input className="input" placeholder="e.g. Hyderabad" {...register('location')} /></Field>
+            </div>
 
             <div className="divider" />
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <Field label="Experience"><input className="input" placeholder="e.g. 2 years" {...register('experience')} /></Field>
               <Field label="Current Company"><input className="input" placeholder="Company" {...register('currentCompany')} /></Field>
               <Field label="Notice Period"><input className="input" placeholder="e.g. 30 days" {...register('noticePeriod')} /></Field>
               <Field label="Current CTC"><input className="input" placeholder="e.g. ₹6 LPA" {...register('currentCTC')} /></Field>

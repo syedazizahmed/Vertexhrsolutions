@@ -5,7 +5,7 @@ import { ChevronLeft, Save } from 'lucide-react';
 import api from '@/api/api';
 
 const JOB_TYPES = ['Full-time', 'Part-time', 'Contract', 'Internship', 'Freelance'];
-const EXPERIENCE = ['Fresher', '1-2 years', '3-5 years', '5-10 years', '10+ years'];
+const EXPERIENCE = ['Internship', 'Fresher', '1-2 years', '3-5 years', '5-10 years', '10+ years'];
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (

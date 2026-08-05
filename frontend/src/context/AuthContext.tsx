@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import api from '@/api/api';
 
 interface AdminUser { name: string; email: string }
@@ -18,12 +18,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return token && name && email ? { name, email } : null;
   });
 
+  // A seeker signing in elsewhere clears any lingering admin session (only one identity active per browser session).
+  useEffect(() => {
+    const handler = () => setAdmin(null);
+    window.addEventListener('vertex:admin-logout', handler);
+    return () => window.removeEventListener('vertex:admin-logout', handler);
+  }, []);
+
   const adminLogin = useCallback(async (email: string, password: string) => {
     const { data } = await api.post('/auth/login', { email, password });
+    localStorage.removeItem('seekerToken');
+    localStorage.removeItem('seekerUser');
+    localStorage.removeItem('interestTags');
+    window.dispatchEvent(new Event('vertex:seeker-logout'));
     localStorage.setItem('adminToken', data.token);
-    localStorage.setItem('adminName', data.name);
-    localStorage.setItem('adminEmail', data.email);
-    setAdmin({ name: data.name, email: data.email });
+    localStorage.setItem('adminName', data.user.name);
+    localStorage.setItem('adminEmail', data.user.email);
+    setAdmin({ name: data.user.name, email: data.user.email });
   }, []);
 
   const adminLogout = useCallback(() => {

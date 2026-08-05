@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Mail, Phone, FileText, ExternalLink } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { X, Mail, Phone, FileText, ExternalLink, UserRound } from 'lucide-react';
 import api from '@/api/api';
 import type { Application, Job, PaginatedApplications } from '@/types';
 
 const STATUSES = ['New', 'Reviewed', 'Shortlisted', 'Rejected'] as const;
 
 export default function JobApplicantsModal({ job, onClose }: { job: Job; onClose: () => void }) {
+  const navigate = useNavigate();
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -87,6 +89,10 @@ export default function JobApplicantsModal({ job, onClose }: { job: Job; onClose
                         </a>
                       )}
                     </div>
+                    <button onClick={() => navigate(`/admin/applications/${app._id}`)}
+                      className="btn btn-secondary btn-sm" style={{ marginTop: '0.65rem', width: '100%', justifyContent: 'center' }}>
+                      <UserRound size={13} /> View Full Profile
+                    </button>
                   </div>
                 ))}
               </div>

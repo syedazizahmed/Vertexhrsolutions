@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { MapPin, Clock, Briefcase, Building2, ArrowRight } from 'lucide-react';
+import { MapPin, Wallet, Briefcase, Building2, ArrowRight } from 'lucide-react';
 import type { Job } from '@/types';
 
 const typeVariant: Record<string, string> = {
@@ -57,7 +57,7 @@ export default function JobCard({ job, index = 0 }: { job: Job; index?: number }
         )}
         {job.salary && (
           <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', color: 'var(--green)', fontWeight: 500 }}>
-            <Clock size={12} /> {job.salary}
+            <Wallet size={12} /> {job.salary}
           </span>
         )}
       </div>
