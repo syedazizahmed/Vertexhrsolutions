@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import Seeker from '../models/Seeker.js';
 import Job from '../models/Job.js';
-import { sendVerificationEmail } from '../utils/mailer.js';
+import { sendVerificationEmail, sendPasswordResetEmail } from '../utils/mailer.js';
 
 const router = express.Router();
 
@@ -62,6 +62,51 @@ router.post('/login', async (req, res) => {
     if (!match) return res.status(401).json({ message: 'Invalid credentials' });
 
     res.json({ token: signToken(seeker._id), name: seeker.name, email: seeker.email, isVerified: seeker.isVerified });
+  } catch {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// POST /api/seekers/forgot-password - request a password reset code
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const seeker = await Seeker.findOne({ email });
+
+    if (seeker) {
+      const otp = crypto.randomInt(100000, 1000000).toString();
+      seeker.resetOTP = otp;
+      seeker.resetOTPExpires = new Date(Date.now() + 15 * 60 * 1000);
+      await seeker.save();
+      sendPasswordResetEmail({ to: seeker.email, name: seeker.name, otp }).catch((err) => console.error('Failed to send reset email:', err.message));
+    }
+
+    res.json({ message: 'If that email is registered, a reset code has been sent.' });
+  } catch {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// POST /api/seekers/reset-password - confirm OTP and set a new password
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+    const seeker = await Seeker.findOne({ email });
+    if (!seeker) return res.status(400).json({ message: 'Invalid or expired code.' });
+
+    if (!seeker.resetOTP || !seeker.resetOTPExpires || seeker.resetOTPExpires < new Date()) {
+      return res.status(400).json({ message: 'This code has expired. Please request a new one.' });
+    }
+    if (seeker.resetOTP !== otp) {
+      return res.status(400).json({ message: 'Incorrect code. Please try again.' });
+    }
+
+    seeker.password = await bcrypt.hash(newPassword, 10);
+    seeker.resetOTP = undefined;
+    seeker.resetOTPExpires = undefined;
+    await seeker.save();
+
+    res.json({ message: 'Password reset successfully.' });
   } catch {
     res.status(500).json({ message: 'Server error' });
   }

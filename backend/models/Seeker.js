@@ -8,6 +8,8 @@ const seekerSchema = new mongoose.Schema(
     isVerified: { type: Boolean, default: false },
     verificationOTP: { type: String },
     verificationOTPExpires: { type: Date },
+    resetOTP: { type: String },
+    resetOTPExpires: { type: Date },
     viewedJobs: [
       {
         job: { type: mongoose.Schema.Types.ObjectId, ref: 'Job' },

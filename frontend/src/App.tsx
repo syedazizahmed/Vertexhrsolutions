@@ -1,5 +1,7 @@
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/layout/Navbar';
+import Footer from '@/components/layout/Footer';
+import ChatWidget from '@/components/layout/ChatWidget';
 import VerificationBanner from '@/components/layout/VerificationBanner';
 import CategoryDrawer from '@/components/jobs/CategoryDrawer';
 import { useCategory } from '@/context/CategoryContext';
@@ -13,6 +15,7 @@ import AppliedJobs from '@/pages/AppliedJobs';
 import VerifyEmail from '@/pages/VerifyEmail';
 import SeekerLogin from '@/pages/auth/SeekerLogin';
 import SeekerRegister from '@/pages/auth/SeekerRegister';
+import ForgotPassword from '@/pages/auth/ForgotPassword';
 import AdminLogin from '@/pages/admin/AdminLogin';
 import AdminDashboard from '@/pages/admin/AdminDashboard';
 import AdminJobForm from '@/pages/admin/AdminJobForm';
@@ -47,17 +50,21 @@ export default function App() {
         {/* Seeker auth */}
         <Route path="/login" element={<SeekerLogin />} />
         <Route path="/register" element={<SeekerRegister />} />
+        <Route path="/forgot-password" element={<ForgotPassword variant="seeker" />} />
         <Route path="/verify-email" element={<SeekerPrivateRoute><VerifyEmail /></SeekerPrivateRoute>} />
         <Route path="/applied-jobs" element={<SeekerPrivateRoute><AppliedJobs /></SeekerPrivateRoute>} />
 
         {/* Admin */}
         <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/forgot-password" element={<ForgotPassword variant="admin" />} />
         <Route path="/admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
         <Route path="/admin/jobs/new" element={<PrivateRoute><AdminJobForm /></PrivateRoute>} />
         <Route path="/admin/jobs/edit/:id" element={<PrivateRoute><AdminJobForm /></PrivateRoute>} />
         <Route path="/admin/applications" element={<PrivateRoute><AdminApplications /></PrivateRoute>} />
         <Route path="/admin/applications/:id" element={<PrivateRoute><AdminApplicantProfile /></PrivateRoute>} />
       </Routes>
+      <Footer />
+      <ChatWidget />
     </>
   );
 }

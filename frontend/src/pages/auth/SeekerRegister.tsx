@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useSeeker } from '@/context/SeekerContext';
+import PasswordInput from '@/components/ui/PasswordInput';
 
 export default function SeekerRegister() {
   const { seekerRegister } = useSeeker();
@@ -38,13 +39,16 @@ export default function SeekerRegister() {
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
           {[{ label: 'Full Name', type: 'text', val: name, set: setName, ph: 'John Doe' },
             { label: 'Email', type: 'email', val: email, set: setEmail, ph: 'you@email.com' },
-            { label: 'Password', type: 'password', val: password, set: setPassword, ph: '••••••••' }
           ].map(({ label, type, val, set, ph }) => (
             <div key={label}>
               <label className="form-label">{label}</label>
               <input className="input" type={type} placeholder={ph} value={val} onChange={(e) => set(e.target.value)} required />
             </div>
           ))}
+          <div>
+            <label className="form-label">Password</label>
+            <PasswordInput value={password} onChange={setPassword} required />
+          </div>
 
           {error && <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '0.65rem 0.875rem', color: '#f87171', fontSize: '0.82rem' }}>{error}</div>}
 

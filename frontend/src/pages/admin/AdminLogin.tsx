@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Shield } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import PasswordInput from '@/components/ui/PasswordInput';
 
 export default function AdminLogin() {
   const { adminLogin } = useAuth();
@@ -41,8 +42,11 @@ export default function AdminLogin() {
             <input className="input" type="email" placeholder="admin@vertexhr.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
           <div>
-            <label className="form-label">Password</label>
-            <input className="input" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <label className="form-label">Password</label>
+              <Link to="/admin/forgot-password" style={{ color: 'var(--accent)', fontSize: '0.78rem', textDecoration: 'none', marginBottom: '0.375rem' }}>Forgot password?</Link>
+            </div>
+            <PasswordInput value={password} onChange={setPassword} required />
           </div>
 
           {error && <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '0.65rem 0.875rem', color: '#f87171', fontSize: '0.82rem' }}>{error}</div>}

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff } from 'lucide-react';
 import { useSeeker } from '@/context/SeekerContext';
+import PasswordInput from '@/components/ui/PasswordInput';
 
 export default function SeekerLogin() {
   const { seekerLogin } = useSeeker();
@@ -11,7 +11,6 @@ export default function SeekerLogin() {
   const from = (location.state as { from?: string } | null)?.from || '/';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [show, setShow] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -41,14 +40,11 @@ export default function SeekerLogin() {
             <input className="input" type="email" placeholder="you@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
           <div>
-            <label className="form-label">Password</label>
-            <div style={{ position: 'relative' }}>
-              <input className="input" type={show ? 'text' : 'password'} placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required style={{ paddingRight: '2.75rem' }} />
-              <button type="button" onClick={() => setShow(!show)}
-                style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-3)', cursor: 'pointer', padding: 0 }}>
-                {show ? <EyeOff size={15} /> : <Eye size={15} />}
-              </button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <label className="form-label">Password</label>
+              <Link to="/forgot-password" style={{ color: 'var(--accent)', fontSize: '0.78rem', textDecoration: 'none', marginBottom: '0.375rem' }}>Forgot password?</Link>
             </div>
+            <PasswordInput value={password} onChange={setPassword} required />
           </div>
 
           {error && <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 8, padding: '0.65rem 0.875rem', color: '#f87171', fontSize: '0.82rem' }}>{error}</div>}
